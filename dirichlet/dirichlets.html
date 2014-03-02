@@ -1,0 +1,379 @@
+<HTML>
+<TITLE>
+Dirichlet Mixtures and other Regularizers
+</TITLE>
+
+<H1>
+Dirichlet Mixtures and other Regularizers
+</H1>
+
+<BODY><BR>
+
+This page contains pointers to some of the Dirichlet mixtures and
+other regularizers (methods for estimating probabilities of amino
+acids given small samples) that we have used at UCSC.  Eventually it
+will also point to the results of experiments evaluating different
+regularizers, data sets used for the evaluations, papers, and so forth.
+
+<P>
+The papers are explained in more detail on 
+<a href="dirichlet-papers.html"> this web page. </a>
+
+<P> There is is the beginnings of an <A
+HREF="../gen_sequence/">open-source C library</A> for handling
+Dirichlet mixtures.  Currently the library contains only generators
+for generating according to a Dirichlet mixture, but will later have
+all the useful routines we have developed for Dirichlet mixtures.
+
+<H3> Some of the more interesting Dirichlet mixture regularizers: </H3>
+
+<DL>
+
+<DT> <A HREF="dist.20comp"> dist.20comp </A>
+<DD> This mixture was added to our suite of mixtures November 2001.
+It was trained on 314,585 columns from 1216 PDB chains.
+The 1216 ids in this set were chosen from one of Dunbrack's culled PDB
+sets (20% 3.0 Ang) with fragments removed (no piece >=20 residues) and
+further restricting the set to those that had >=10 chains in
+t2k-thin62 (t2k alignments thinned to 62% residue identity).
+The t2k-thin62 alignments were used to get the column counts, with no weighting.
+<P>
+Although not yet tested, it is hoped that this mixture will do a
+better job of generalizing small samples to distributions typical of
+the superfamily.
+
+<DT> <A HREF="recode5.20comp"> recode5.20comp </A>
+<DD> There was some hope that this mixture would supersede 
+<A HREF="recode4.20comp"> recode4.20comp</A>, 
+and
+<A HREF="recode3.20comp"> recode3.20comp</A>, but so far
+recode3.20comp still seems to be better.
+
+<P> recode5.20comp was reoptimized from recode3.20comp on a selection
+of 198,567 columns taken from sam-t99 alignments.  The columns were
+those in the "overrep" training set (essentially FSSP plus a set of
+high-resolution structures with up to 50% identity) weighted with
+the Henikoffs' weighting scheme, scaled to gain
+an average of 0.5 bits/column relative to the background.  
+Only columns from alignments with a reasonably diverse multiple
+alignment (weight of 5.0 or more) were used 
+(198,567 columns out of 497,210).
+
+<P>
+<DT> <A HREF="recode4.20comp"> recode4.20comp </a> 
+
+<DD> This was Karplus's favorite mixture for HMMs intended
+for finding distantly related proteins, superseding 
+<A HREF="recode1.20comp"> recode1.20comp</A>,
+<A HREF="recode2.20comp"> recode2.20comp</A>,
+and
+<A HREF="recode3.20comp"> recode3.20comp</A>, but subsequent testing
+showed recode3.20comp as preferable.
+
+<P> The recode4.20comp mixture was re-optimized from
+fournier-fssp.20comp on the  fssp-3-5-98-select-0.8-3.cols data set,
+to minimize the errors in estimating distributions from samples of 1,
+2, or 3 amino acids.  It differs from earlier mixtures in the "recode"
+series in predicting a broader distribution for any given set of counts.
+It does a better job of matching distributions structural alignments than
+earlier alignments in the series.
+
+<P>
+The recode3.20comp mixture may still be more appropriate for modeling
+close homologs, as it does slightly better on the target98
+alignments. (Note: this may be an artifact, as the target98 alignments
+were built using either the recode3.20comp mixture or the similar
+recode2.20comp mixture.)
+
+<P>
+<DT> <A HREF="fournier-fssp.20comp"> fournier-fssp.20comp </a> 
+<DD> 
+The fournier-fssp.20comp mixture was created by 
+Dave Fournier.  He started from the
+recode3.20comp dataset, then optimized to maximize the likelihood of
+the fssp-3-5-98-select-0.8-3.cols data set, using 
+<A HREF="http://otter-rsch.com/admodel.htm">
+AD Model Builder </A> program.  This mixture is very good at computing
+the likelihood of a given amino-acid distribution, but is not as good
+at estimating the distribution given a sample of one or two amino
+acids from the distribution.
+
+
+<P>
+<DT> <A HREF="recode3.20comp"> recode3.20comp </a> 
+<DD> 
+Optimized for the target98 alignments built for all the leaves of
+the FSSP tree (version from 3-5-98).  The sequences were weighted to
+obtain an average information content of 1.0 bits/column (relative to
+using background frequencies).
+<P>
+This regularizer was trained on a dataset that included columns
+     with few counts, so it probably overestimates the probability of
+     residues being conserved.
+     
+
+<P>
+<DT> <A HREF="hydro-cons.3comp"> hydro-cons.3comp </A>
+<DD>
+This is a three-component mixture (hydrophobic/hydrophilic/highly
+conserved), that does quite well at encoding a database based on DALI
+structural alignments from FSSP.  Despite having only 62 degrees of
+freedom, it does better than more complicated mixtures that were
+trained on different datasets.  The database it was trained on
+consisted of FSSP alignments (with Z-score >= 7.0), in which there
+were at least 22 sequences.  The sequences were weighted with the
+Henikoffs' weighting scheme with total weight=num_seq ^ 0.25.
+
+<p> This mixture is a good one for people who want a minimal number of
+parameters and an easily explained mixture.
+
+<P>
+<DT> <A HREF="recode2.20comp"> recode2.20comp </a> 
+Previously Karplus's favorite mixture, superseding <A
+HREF="recode1.20comp"> recode1.20comp.  </A>
+
+<DD> Optimized for a subset of realigned HSSP files.  The sequences
+were weighted to obtain an average information content of 1.4
+bits/column (relative to using background frequencies), then only
+those columns that had a total weight of at least 4.5 were used, to
+ensure that only alignments representing a moderately or very diverse
+family were used.  The mixture was repeatedly tweaked by hand and
+re-optimized to make the individual components as meaningful as
+possible (physiochemically).
+
+This mixture does a good job of regularizing,  and should also be
+useful for recoding inputs to neural networks (using the component
+probabilities instead of amino acid frequencies).
+
+(The recode1.20comp regularizer did not do as good a job of recoding
+highly conserved C, G, H, P, and W as recode2.20comp does.)
+
+<P>
+<DT> <A
+HREF="byst-4.5-0-3.9comp"> byst-4.5-0-3.9comp
+</A>
+Current  best 9-component Dirichlet mixture.
+<DD> Optimized for same subset of realigned HSSP files as
+recode1.20comp, but starting from the 9-component mixtures we have
+used previously.  This mixture (and recode1.20comp) should be better
+for remote homology search than our previous ones, but may not be
+quite as good for aligning very close homologs.
+		
+<P>
+<DT> <A HREF="rev4-opt3-weight.9comp"> rev4-opt3-weight.9comp </A>
+Old  best 9-component Dirichlet mixture.
+</A>
+<DD> Optimized for the revision 4 realigned HSSP whole chains, with
+entropy weighting.
+
+<P>
+<DT> <A HREF="uprior.9comp"> uprior.9comp
+Published 9-component Dirichlet mixture.
+</A>
+<DD> Optimized for the unweighted BLOCKS database.
+This was our first really good Dirichlet mixture.  Many subsequent
+9-component mixtures were created by retraining this one for different
+data sets.  The optimization problem for Dirichlet mixtures is quite
+difficult, since there are many local minima of similar quality, and
+it takes a lot of optimization to get the value of the local minimum
+determined well enough to distinguish it from the others.  This
+mixture provides a particularly good starting point for optimization,
+since it has components that are fairly easily explained. 
+This is the mixture describe in the tech report and the CABIOS article.
+
+<P>
+<DT> <A HREF="CGP-opt6.12comp"> CGP-opt6.12comp
+A 12-component Dirichlet mixture.
+</A>
+<DD> This mixture provides separate components for
+highly conserved C, P, and G residues, which might be useful when the
+probabilities of the individual components are used to predict
+properties of the position, but as a regularizer, this mixture is
+probably worse than the 9-component mixtures above, since it was
+optimized on a smaller data set with unweighted sequences.
+<p> Eventually, we'll get around to creating a mixture which separates
+the highly-conserved residues into separate components, and which
+works well as a regularizer, but we haven't needed this feature much yet.
+</A>
+
+<P>
+<DT> <A HREF="merge-opt.13comp">  merge-opt.13comp </a>
+<DD>
+A 13-component mixture (derived from merging some of the best
+9-component mixtures and reoptimizing.  One notable feature of this
+mixture is that there are components centered around ND, ED, and EK,
+while the 9-component mixtures tend to clump these into only one or
+two components.  The component that 9-component mixtures have  for
+"highly conserved residues" is also split into two components (one
+mainly for C and W, the other mainly for P and G---these should
+probably both be split further, to get down to components dominated by
+a single residue).
+<DD>
+
+</DL>
+
+<h3> The training data </h3>
+
+The data used for training the Dirichlet mixtures described above is
+provided (in gzipped files of count vectors).  Note that all these
+training sets are from fairly old releases of databases.  At some
+point we will probably pick up a new non-redundant set of alignments
+and create a new training set to reoptimize our mixtures.  Because the
+current mixtures do well in all the different training sets, we don't
+expect any major changes as a result of changes in the training data
+(whether from new protein sequences, new alignments, or new weighting
+schemes). 
+
+<DL>
+<DT> <A HREF="diverse-1216-uw.cols.gz"> diverse-1216-uw
+<DD> This is the data set that dist.20comp was trained on.
+It contains 314,585 columns from 1216 PDB chains.
+The 1216 ids in this set were chosen from one of Dunbrack's culled PDB
+sets (20% 3.0 Ang) with fragments removed (no piece >=20 residues) and
+further restricting the set to those that had >=10 chains in
+t2k-thin62 (t2k alignments thinned to 62% residue identity).
+The t2k-thin62 alignments were used to get the column counts, with no weighting.
+<P>
+
+<P>
+<DT> <A Href="all-w.cols.gz"> blocks </a>
+<DD> This is the blocks database, version 7.01 (Nov 1993).
+[Henikoff, S & Henikoff, JG (1991) Automated assembly of
+protein blocks for database searching, Nucleic Acids Res. 19:6565-6572.]
+
+The sequence weighting is the Henikoff's position-specific weighting
+scheme, scaled so that the sum of the weights is the number of
+sequences in each block.
+[Steven Henikoff and Jorja G. Henikoff, "Position-based Sequence Weights"
+Journal of Molecular Biology, 243(4): 574--578, Nov 1994.]
+<p>
+This data set is partitioned into three subsets for separate
+train/test evaluation:
+<UL>
+<LI> <A HREF="k10a-w.cols.gz"> k10a </a>
+<LI> <A HREF="k10b-w.cols.gz"> k10b </a>
+<LI> <A HREF="k80c-w.cols.gz"> k80c </a>
+</UL>
+
+<P>
+<DT> <A HREF="mall-hw.cols.gz"> mall-hw </a>
+<DD> This is a supposedly non-redundant subset of HSSP alignments,
+selected in 1995, weighted with the Henikoffs' weighting scheme,
+scaled so that the sum of the weights is the number of sequences in
+the alignment.
+<p>
+This data set is partitioned into two subsets for separate
+train/test evaluation:
+<UL>
+<LI> <A HREF="m20a-hw.cols.gz"> m20a</a>
+<LI> <A HREF="m80b-hw.cols.gz"> m80b</a>
+</UL>
+
+<P>
+<DT> <A HREF="mall-uw.cols.gz"> mall-uw </a>
+<DD> This is the same set of alignments, but with all sequences
+having weight 1.0
+
+<P>
+<DT> <A HREF="mssp_full-5w.cols.gz"> mall-5w </a>
+<DD> This is the same set of alignments, but with sequences having
+weight determined by an as-yet-unpublished weighting scheme.
+
+<P>
+<DT> <A HREF="rev4-0.45.cols.gz"> rev4-0.45 </a>
+<DD> A set of alignments that were used to build an early version of
+our structure library, weighted with an as-yet-unpublished weighting
+scheme so that the resulting entropy of the mean posterior estimate 
+is about 0.45 bits/column.  This set is known to be redundant and not
+have full coverage, but some of our best mixtures were trained on it.
+
+
+<P>
+<DT> <A HREF="fssp-3-5-98-select-0.8-3.cols.gz">  fssp-3-5-98-select-0.8-3 </a>
+<DD> This is a set of count vectors using unweighted sequences
+selected from alignments from the FSSP structural alignments of 3 May 1998.
+Only sequences with Z score >= 7.0 or (RMSD<=2.0 and alignment length
+>= 0.6* min(sequence length, template length) were included in the
+alignment, and sequences with more than 80% sequence identity to a
+previous sequence in the alignment were omitted.
+Count vectors with fewer than 3 amino acids were omitted.
+<P>
+This data set should be good for training regularizers to find remote
+homologs, since the structural alignments bring together quite remote
+homologs, and the filtering criteria remove most of the close homologs.
+
+
+
+<P>
+<DT> <A HREF="PDBselect25-6.24.98-t98-select-0.5-35.cols.gz"> 
+	PDBselect25-6.24.98-t98-select-0.5-35
+	</a>
+<DD> This count set contains unweighted counts from  multiple
+	alignments generated by the SAM-T98 method starting with seed sequences
+	from the PDBSelect set of 6/24/1998.
+	Sequences with >=50% identity to previous sequences in a
+	multiple alignment were discarded, and columns with fewer than
+	35 counts were discarded.
+<P>
+This data set is good for training regularizers to find close or
+slightly remote homologs, but does not include very remote homologs.
+	
+
+</DL>
+
+<h3> Results of testing </h3>
+Results of testing the mixtures on different data sets will
+eventually be posted here.
+<DL>
+</DL>
+
+<h3> Some references to evaluations of Dirichlet mixtures done outside UCSC.
+</h3>
+
+<UL>
+
+<LI>
+author="Roman L. Tatusov and Stephen F. Altschul and Eugen V. Koonin",
+title="Detection of Conserved Segments in Proteins: Iterative Scanning
+of Sequence Databases with Alignment Blocks",
+journal=pnas,
+year=1994, month=dec,
+volume=91,
+pages="12091--12095",
+
+<LI>
+        author  =  "Timothy L. Bailey and Charles Elkan",
+        title  =  "The value of prior knowledge in discovering
+                        motifs with {MEME}",
+        booktitle = ismb95,
+	publisher="AAAI/MIT Press",
+        address= "Menlo Park, CA",
+        year= 1995,
+        month= jul,
+	pages = "21-29"
+
+</UL>
+
+<h2> Pointers to other bioinformatics research at UCSC: </h2>
+<DL>
+<DT> <A HREF="http://www.cse.ucsc.edu/research/compbio/"> UCSC Computational Biology </A>	
+<DT> <A HREF="../research.html"> research overview </A>	
+<DT><A HREF="http://www.cse.ucsc.edu/classes/cmp243/"
+ADD_DATE="843871199" LAST_VISIT="846556277" LAST_MODIFIED="843871183">
+CMP243 (bioinformatics class)</A>
+
+</DL>
+
+<hr>
+
+
+<address>
+Kevin Karplus <br>
+Computer Engineering <br>
+University of California, Santa Cruz <br>
+Santa Cruz, CA  95064 <br>
+USA <br>
+<a href="mailto:karplus@cse.ucsc.edu"> karplus@cse.ucsc.edu </a> <br>
+(408) 459-4250 <br>
+</address>
+</HTML>

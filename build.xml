@@ -1,0 +1,361 @@
+<?xml version="1.0"?>
+<!-- build.xml - Build file for Sample Cytoscape Plugin -->
+<project name="Cytoscape" default="ob" basedir=".">
+	
+	<!-- Change this to the name of your jar -->
+	<property name="jar.name" value="sampler"/>
+
+	<!--  The directory containing library jar files -->	
+	<property name="lib.dir" value="lib"/>
+
+  	<!-- The temporary directory containing source code -->
+  	<property name="src.dir" value="src"/>
+
+  	<!-- Temporary build directories -->
+ 	<property name="build.dir" value="build"/>
+  	<property name="build.classes" value="${build.dir}/classes"/>
+	
+	<!-- Global "magic" property for <javac> -->
+	<property name="build.compiler" value="modern"/>
+	<!--<property name="build.compiler" value="jikes"/>-->
+	
+	<!-- Classpath with all lib JAR Files and all classes -->
+	<path id="classpath">	
+		<fileset dir="${lib.dir}"><include name="**/*.jar"/></fileset>
+		<pathelement location="${build.classes}"/>
+	</path>
+
+  	<!-- Get environment variables as ${env.ENV_VAR} -->
+        <property environment="env"/>
+
+  	<!-- Target to create the build directories prior to compilation -->
+  	<target name="prepare" unless="dont.prepare">
+    		<mkdir dir="${src.dir}"/>
+    		<mkdir dir="${build.dir}"/>
+    		<mkdir dir="${build.classes}"/>
+		<copy todir="${src.dir}/djr">
+			<fileset dir="djr">
+				<exclude name="**/*.class"/>
+				<exclude name="**/*.html"/>
+				<exclude name="**/*.gif"/>
+				<exclude name="**/*README*"/>
+				<exclude name="**/*resources*"/>
+				<exclude name="**/*properties*"/>
+				<exclude name="**/crap/**"/>
+				<exclude name="**/awt/**"/>
+				<exclude name="**/bugs/**"/>
+				<exclude name="**/d3d/**"/>
+				<exclude name="**/ftp/**"/>
+				<exclude name="**/ga/**"/>
+				<exclude name="**/align/**"/>
+                                <exclude name="**/util/MessageQueue.java"/>
+                                <exclude name="**/util/Profiler.java"/>
+                                <exclude name="**/util/ShowClass.java"/>
+                                <exclude name="**/util/Tree.java"/>
+                                <exclude name="**/util/MemProfiler.java"/>
+                                <exclude name="**/util/PrimitiveWrapper.java"/>
+                                <exclude name="**/xmlrpc/**"/>
+                                <exclude name="**/nr/KSTest.java"/>
+                                <exclude name="**/nr/Amoeba*.java"/>
+                                <exclude name="**/nr/NonlinearFit.java"/>
+                                <exclude name="**/nr/*Function.java"/>
+                                <exclude name="**/nr/Simplex.java"/>
+                                <exclude name="**/nr/Anneal.java"/>
+                                <exclude name="**/remote/**"/>
+                                <exclude name="**/*Applet*.java"/>
+                                <exclude name="**/HTMLViewer.java"/>
+                                <exclude name="**/util/array/*Holder.java"/>
+                                <exclude name="**/util/array/TYPEHolder.jtempl"/>
+                                <exclude name="**/util/array/*MultiArray.java"/>
+                                <exclude name="**/util/array/TYPEMultiArray.jtempl"/>
+                                <exclude name="**/util/array/*Stack.java"/>
+                                <exclude name="**/util/array/TYPEStack.jtempl"/>
+                                <exclude name="**/util/array/Float*.java"/>
+                                <exclude name="**/sh3/My*.java"/>
+                                <exclude name="**/prior/SimilarSitesPrior.java"/>
+                                <exclude name="**/prior/HydroPrior.java"/>
+                                <exclude name="**/**/*Gapped*.java"/>
+                                <exclude name="**/esf/*.java"/>
+                                <exclude name="**/sh3/*oupled*.java"/>
+			</fileset>
+		</copy>
+		<antcall target="detemplify"/>
+		<antcall target="remove_gapped"/>
+		<antcall target="remove_gui"/>
+  	</target>
+
+  	<target name="compile" depends="build" description="Compiles all source code."/>
+
+	<!-- Target to compile all sampler code -->
+  	<target name="build" depends="prepare" description="Compiles all source code.">
+    		<javac srcdir="${src.dir}" destdir="${build.classes}" nowarn="on" 
+		                           source="1.4" listfiles="yes" debug="true">
+			<classpath refid="classpath"/>
+		</javac>
+		<echo message="DONE COMPILING"/>
+	</target>
+  	
+	<!--  Create sampler jar file -->
+   	<target name="jar" depends="build" description="Creates sampler jar file.">
+                <taskdef resource="genjar.properties" classpath="${lib.dir}/GenJar.jar"/>
+	        <genjar jarfile="${build.dir}/${jar.name}.jar">
+                        <classpath refid="classpath"/>
+                        <!--<classpath><pathelement location="${build.classes}"/></classpath>-->
+			<class><fileset dir="${build.classes}">
+                                <exclude name="**/MakeJarRunnable.class"/>
+                        </fileset></class>
+                        <resource><fileset dir="resources">
+                                <include name="**/*"/>
+                        </fileset></resource>
+                        <classfilter>
+                                <!--<exclude name="ptolemy."/>
+                                <exclude name="iubio."/>
+                                <exclude name="ucar."/>-->
+                                <exclude name="org.apache.tools.ant."/>
+                                <exclude name="org.xml."/>
+                        </classfilter>
+		</genjar>
+                <java classname="djr.util.MakeJarRunnable" fork="no"
+                                   classpathref="classpath">
+                          <arg value="${build.dir}/${jar.name}.jar"/>
+                          <arg value="djr.motif.sampler.MultiSampler"/>
+                          <arg value="${build.dir}/${jar.name}_r.jar"/>
+                </java>
+                <move file="${build.dir}/${jar.name}_r.jar" 
+                            tofile="${build.dir}/${jar.name}.jar"/>
+	</target>
+
+  	<target name="dist" depends="prepare" description="Create source tar.gz.">
+                <copy todir="${src.dir}" file="build.xml"/>
+                <copy todir="${src.dir}" file="LICENSE"/>
+                <copy todir="${src.dir}" file="README"/>
+                <copy todir="${src.dir}" file="VERSION"/>
+                <copy todir="${src.dir}/dirichlet"><fileset dir="dirichlet"/></copy>
+                <copy todir="${src.dir}/matrix"><fileset dir="matrix"/></copy>
+                <copy todir="${src.dir}/resources"><fileset dir="resources"/></copy>
+                <copy todir="${src.dir}/lib"><fileset dir="lib"/></copy>
+		<property file="VERSION"/>
+                <tar tarfile="netmotsa-${build.number.major}.${build.number.minor}.tar.gz" 
+                         basedir="${src.dir}" compression="gzip"/>
+	</target>
+
+	<!-- Target to clean out all directories -->
+  	<target name="clean" description="Removes all generated files.">
+    		<delete dir="${src.dir}"/>
+    		<delete dir="${build.dir}"/>
+		<delete dir="${dist.dir}"/>
+  	</target>
+	
+        <target name="remove_gapped" if="no.gapped">
+    		<delete dir="${src.dir}/djr/motif/sampler/esf"/>
+    		<delete><fileset dir="${src.dir}/djr/motif/">
+                        <include name="**/*Gapped*.java"/>
+                </fileset></delete>
+    		<delete dir="${src.dir}/djr/motif/sh3"/>
+        </target>
+
+        <target name="remove_gui" if="no.gui">
+    		<delete dir="${src.dir}/djr/motif/gui"/>
+    		<delete dir="${src.dir}/djr/util/gui"/>
+		<replace summary="no" dir="${src.dir}/djr" includes="**/*.java">
+			<replacefilter token="// START GUI" value="/* START GUI"/>
+			<replacefilter token="// END GUI" value="END GUI */"/>
+			<replacefilter token="public synchronized" value="public"/>
+		</replace>
+        </target>
+
+	<target name="detemplify">
+		<property name="array.dir" value="${src.dir}/djr/util/array"/>
+		<property name="ZERO" value="0"/>
+		<antcall target="detemp">
+			<param name="TTTYPE" value="Integer"/>
+			<param name="TTYPE" value="Int"/>
+			<param name="TYPE" value="int"/>
+		</antcall>
+		<antcall target="detemp">
+			<param name="TTTYPE" value="Short"/>
+			<param name="TTYPE" value="Short"/>
+			<param name="TYPE" value="short"/>
+		</antcall>
+		<antcall target="detemp">
+			<param name="TTTYPE" value="Double"/>
+			<param name="TTYPE" value="Double"/>
+			<param name="TYPE" value="double"/>
+		</antcall>
+		<replace summary="no" dir="${array.dir}" includes="Double*.java">
+			<replacefilter token="(double)" value=""/>
+		</replace>
+		<antcall target="detemp">
+			<param name="TTTYPE" value="Long"/>
+			<param name="TTYPE" value="Long"/>
+			<param name="TYPE" value="long"/>
+		</antcall>
+                <!--
+		<antcall target="detemp">
+			<param name="TTTYPE" value="Float"/>
+			<param name="TTYPE" value="Float"/>
+			<param name="TYPE" value="float"/>
+		</antcall>
+                -->
+		<antcall target="detemp">
+			<param name="TTTYPE" value="Byte"/>
+			<param name="TTYPE" value="Byte"/>
+			<param name="TYPE" value="byte"/>
+		</antcall>
+		<antcall target="detemp">
+			<param name="TTTYPE" value="Character"/>
+			<param name="TTYPE" value="Char"/>
+			<param name="TYPE" value="char"/>
+		</antcall>
+		<replace summary="no" dir="${array.dir}" includes="Char*.java">
+			<replacefilter token="Character.parseChar( str[ i ] )" 
+			               value="str[ i ].charAt( 0 )"/>
+			<replacefilter token="- Character.MAX_VALUE" value="0"/>
+		</replace>
+		<antcall target="detemp">
+			<param name="TTTYPE" value="Boolean"/>
+			<param name="TTYPE" value="Bool"/>
+			<param name="TYPE" value="boolean"/>
+			<param name="ZERO" value="false"/>
+		</antcall>
+		<replace summary="no" dir="${array.dir}" includes="Bool*.java">
+			<replacefilter token="(boolean) i" value="true"/>
+			<replacefilter token="BooleanValue" value="booleanValue"/>
+			<replacefilter token="// NO BOOL" value="/* NO BOOL"/>
+			<replacefilter token="// END NO BOOL" value="END NO BOOL */"/>
+			<replacefilter token="/* BOOL ONLY" value="// BOOL ONLY"/>
+		</replace>
+		<antcall target="detemp">
+			<param name="TTTYPE" value="Object"/>
+			<param name="TTYPE" value="Obj"/>
+			<param name="TYPE" value="Object"/>
+			<param name="ZERO" value="null"/>
+		</antcall>
+		<delete verbose="true">
+			<fileset dir="${src.dir}/djr/util/array">
+				<include name="**/Obj*.java"/>
+				<exclude name="**/ObjVector.java"/>
+				<exclude name="**/ObjStack.java"/>
+			</fileset>
+		</delete>
+		<replace summary="no" dir="${array.dir}" includes="Obj*.java">
+			<replacefilter token="(Object) i" value="null"/>
+			<replacefilter token="val == data[ i ]" 
+			                       value="val.equals( data[ i ] )"/>
+			<replacefilter token="new Object( data[ cur ++ ] )" 
+			                       value="data[ cur ++ ]"/>
+			<replacefilter token="Object.toString( get( ind ) )" 
+			                       value="get( ind ).toString()"/>
+			<replacefilter token="new Object( get( cur ++ ) )" 
+			                       value="get( cur ++ )"/>
+		</replace>
+	</target>
+
+	<target name="detemp">
+		<property name="array.dir" value="${src.dir}/djr/util/array"/>
+		<copy    file="${array.dir}/TYPEUtils.jtempl"
+		       tofile="${array.dir}/${TTYPE}Utils.java"/>
+		<copy    file="${array.dir}/TYPEVector.jtempl"
+		       tofile="${array.dir}/${TTYPE}Vector.java"/>
+                <!--
+		<copy    file="${array.dir}/TYPEStack.jtempl"
+		       tofile="${array.dir}/${TTYPE}Stack.java"/>
+		<copy    file="${array.dir}/TYPEMultiArray.jtempl"
+		       tofile="${array.dir}/${TTYPE}MultiArray.java"/>
+		<copy    file="${array.dir}/TYPEHolder.jtempl"
+		       tofile="${array.dir}/${TTYPE}Holder.java"/>
+                -->
+		<replace summary="no" dir="${array.dir}" includes="${TTYPE}*.java">
+			<replacefilter token="TTTYPE" value="${TTTYPE}"/>
+			<replacefilter token="TTYPE" value="${TTYPE}"/>
+			<replacefilter token="TYPE" value="${TYPE}"/>
+			<replacefilter token="ZERO" value="${ZERO}"/>
+		</replace>
+	</target>
+
+	<!-- Run a class MYCLASS (from the ${build} directory) with the
+	                               command line 'MY ARGS' via:
+	     ant run -Dclass=${class} -Dargs='MY ARGS' -->
+	<target name="run" depends="compile">
+		<echo message="${class} ${args}"/>
+	        <java classname="${class}" fork="true" failonerror="true">
+                        <classpath refid="classpath"/>
+                        <arg line="${args}"/>
+                </java>
+	</target>
+
+	<target name="backup">
+		<replace summary="no" file="VERSION" token="build.number" 
+		                      value="old.build.number"/>
+		<property file="VERSION"/>
+		<property name="old.build.number" 
+		            value="${old.build.number.major}.${old.build.number.minor}"/>
+		<echo message="OLD BUILD NUMBER = ${old.build.number} (${old.build.number.time})"/>
+		<replace summary="no" file="VERSION" token="old.build.number" 
+		                      value="build.number"/>
+		<propertyfile file="VERSION">
+		        <entry key="build.number.minor" type="int" 
+			       value="1" operation="+" pattern="0000"/>
+		        <entry key="build.number.major" type="int" 
+			       value="1" operation="="/>
+		        <entry key="build.number.time" type="date" value="now"
+			       pattern="EE MMM dd hh:mm:ss zz yyyy"/> 
+		</propertyfile>
+		<property file="VERSION"/>
+		<property name="build.number" 
+		                value="${build.number.major}.${build.number.minor}"/>
+		<echo message="NEW BUILD NUMBER = ${build.number} (${build.number.time})"/>
+		<replace summary="yes" dir="djr" includes="**/*.java,**/*.jtempl">
+			<replacefilter token="${old.build.number} (${old.build.number.time})" 
+			               value="${build.number} (${build.number.time})"/>
+			<replacefilter token="public static double version = ${old.build.number}" 
+			               value="public static double version = ${build.number}"/>
+		</replace>
+		<mkdir dir="old/${build.number}"/>
+		<copy todir="old/${build.number}">
+			<fileset dir="." followsymlinks="false">
+			        <exclude name="**/src/**"/>
+			        <exclude name="**/build/**"/>
+			        <exclude name="**/dist/**"/>
+			        <exclude name="**/dirichlet/**"/>
+			        <exclude name="**/lib/**"/>
+			        <exclude name="**/matrix/**"/>
+			        <exclude name="**/old/**"/>
+			        <exclude name="**/other_stuff/**"/>
+			        <exclude name="**/paper/**"/>
+			        <exclude name="**/sequences/**"/>
+			        <exclude name="**/SH3/**"/>
+			        <exclude name="**/motifFinder/**"/>
+			        <exclude name="**/*.tmp"/>
+			        <exclude name="**/*.fst"/>
+			        <exclude name="**/*.jar"/>
+			        <exclude name="**/*.lnk"/>
+			</fileset>
+			<fileset dir="paper" followsymlinks="false">
+			        <include name="**/*.tex"/>
+			        <include name="**/*.bib"/>
+			        <include name="**/*.sh"/>
+			        <exclude name="**/bioinfclass/**"/>
+			        <exclude name="**/old/**"/>
+			</fileset>
+		</copy>
+		<mkdir dir="old/${build.number}/csplugins"/>
+		<copy todir="old/${build.number}/csplugins">
+			<fileset dir="${basedir}/../csplugins" followsymlinks="false">
+			        <include name="**/*.xml"/>
+			        <include name="**/*.java"/>
+			        <include name="**/*.props"/>
+			        <include name="**/project"/>
+			        <exclude name="**/*.jar"/>
+			        <exclude name="**/motif_finder/**"/>
+			        <exclude name="**/build/**"/>
+			        <exclude name="**/sh3/**"/>
+			        <exclude name="**/data/**"/>
+			        <exclude name="**/hepc/**"/>
+			        <exclude name="**/yeast/**"/>
+			        <exclude name="**/CVS/**"/>
+			        <exclude name="**/yeastHuman.manifest"/>
+			</fileset>
+		</copy>
+	</target>
+</project>
