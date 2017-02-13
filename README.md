@@ -3,7 +3,7 @@ PLEASE READ "LICENSE" FILE FOR LICENSE INFORMATION.
 
 Software develped by David J. Reiss at the Institute for Systems
 Biology. 
-dreiss@systemsbiology.org
+reiss@uw.edu
 
 If you use this software and publish any results, I would appreciate a
 reference to my release [paper in Bioinformatics (ISMB/ECCB/2004

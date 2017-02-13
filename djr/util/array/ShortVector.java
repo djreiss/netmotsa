@@ -4,7 +4,7 @@ package djr.util.array;
  * Template class <code>ShortVector</code>
  * See djr.util.Utils.java for a description of what goes on here.
  *
- * @author <a href="mailto:dreiss@systemsbiology.org">David Reiss</a>
+ * @author <a href="mailto:reiss@uw.edu">David Reiss</a>
  * @version 1.9978 (Fri Nov 07 05:56:26 PST 2003)
  */
 public class ShortVector extends MyVector {

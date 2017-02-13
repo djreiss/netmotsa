@@ -9,7 +9,7 @@ import djr.util.array.*;
 /**
  * Abstract class <code>ArgProcessor</code>.
  *
- * @author <a href="mailto:dreiss@systemsbiology.org">David Reiss</a>
+ * @author <a href="mailto:reiss@uw.edu">David Reiss</a>
  * @version 1.9978 (Fri Nov 07 05:56:26 PST 2003)
  */
 public class ArgProcessor implements java.io.Serializable {
@@ -294,7 +294,7 @@ public class ArgProcessor implements java.io.Serializable {
       }
       String className = obj != null ? ReflectUtils.getFullClassName( obj ) : "";
       System.err.println( "\n" + className + " version " + MyUtils.version );
-      System.err.println( "David Reiss (ISB): dreiss@systemsbiology.org" );
+      System.err.println( "David Reiss (ISB): reiss@uw.edu" );
       System.err.print( "USAGE: java " + className + " " );
       String output = "";
       int len = 0;

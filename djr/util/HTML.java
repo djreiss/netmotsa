@@ -5,7 +5,7 @@ package djr.util;
  * HTML contains static methods and variables used to generate a commonly 
  * used subset of HTML formatting sequences.
  *
- * @author <a href="mailto:dreiss@systemsbiology.org">David Reiss</a>
+ * @author <a href="mailto:reiss@uw.edu">David Reiss</a>
  * @version 1.9978 (Fri Nov 07 05:56:26 PST 2003)
  */
 public class HTML {
